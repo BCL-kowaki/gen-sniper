@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { name, phone, token, diagnosisType } = req.body;
+  const { name, phone, token, diagnosisType, uid } = req.body;
 
   if (!name || !phone || !token) {
     return res.status(400).json({ error: "必要な情報が不足しています" });
