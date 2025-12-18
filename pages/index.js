@@ -122,10 +122,21 @@ export default function SMSAuthForm() {
 
   const submitForm = async (token) => {
     try {
-      // サーバーサイドでプロライン送信とメール送信を実行
-      console.log("📤 サーバーへ送信中...");
-      
-      const response = await fetch("/api/submit-form", {
+      // 1. プロラインのフォームに送信
+      console.log("📤 プロラインフォームに送信中...");
+      const prolineSuccess = await submitToProline();
+
+      if (!prolineSuccess) {
+        setError("プロラインへの送信に失敗しました");
+        return;
+      }
+
+      // プロライン送信が成功した時点で成功画面に遷移
+      console.log("✅ プロラインフォーム送信完了 - 成功画面に遷移します");
+      setSuccess(true);
+
+      // 2. メール送信（バックグラウンドで実行、エラーは無視）
+      fetch("/api/submit-form", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -135,21 +146,38 @@ export default function SMSAuthForm() {
           diagnosisType: "",
           uid: uid,
         }),
+      }).catch((err) => {
+        console.error("メール送信エラー（無視）:", err);
+        // メール送信のエラーは無視し、成功画面は維持
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log("✅ 送信完了 - 成功画面に遷移します");
-        console.log("プロライン送信結果:", data.prolineSuccess);
-        setSuccess(true);
-      } else {
-        console.error("送信エラー:", data.error);
-        setError(data.error || "送信に失敗しました");
-      }
     } catch (err) {
       console.error("送信エラー:", err);
       setError("送信エラーが発生しました");
+    }
+  };
+
+  // プロラインのフォームに送信する関数
+  const submitToProline = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("uid", uid || "");
+      formData.append("txt[m3ivdLm0TQ]", userInfo.name);
+      formData.append("txt[c7OXGIYUTL]", userInfo.phone);
+
+      const response = await fetch(
+        "https://z8nhy9aq.autosns.app/fm/qCfHZiTbc0",
+        {
+          method: "POST",
+          body: formData,
+          mode: "no-cors",
+        }
+      );
+
+      console.log("✅ プロラインフォーム送信完了");
+      return true;
+    } catch (error) {
+      console.error("❌ プロラインフォーム送信エラー:", error);
+      return false;
     }
   };
 
@@ -230,7 +258,7 @@ export default function SMSAuthForm() {
                 送信完了！
               </h2>
               <p className="text-gray-600 mb-4">認証が完了しました。</p>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                 <p className="text-green-800 font-semibold mb-2">
                   📱 LINEに戻ってください
                 </p>
@@ -242,9 +270,7 @@ export default function SMSAuthForm() {
               </div>
               <a
                 href="https://lin.ee/KBw6FFo"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full inline-block bg-[#06C755] text-white py-3 px-6 rounded-lg font-semibold hover:bg-[#05B048] transition shadow-md text-center"
+                className="inline-block w-full bg-[#00C300] text-white py-3 px-6 rounded-lg font-semibold hover:bg-[#00B300] transition shadow-md hover:shadow-lg"
               >
                 LINEへ戻る
               </a>
