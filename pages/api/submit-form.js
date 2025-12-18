@@ -95,10 +95,12 @@ export default async function handler(req, res) {
 ━━━━━━━━━━━━━━━━━━━━━━
     `;
 
+    const toEmail = process.env.SES_TO_EMAIL || "hirapro.sharea@gmail.com";
+    
     const params = {
       Source: process.env.SES_FROM_EMAIL,
       Destination: {
-        ToAddresses: ["hirapro.sharea@gmail.com"],
+        ToAddresses: [toEmail],
       },
       Message: {
         Subject: {
@@ -116,7 +118,7 @@ export default async function handler(req, res) {
 
     console.log("=== メール送信情報 ===");
     console.log("送信元:", process.env.SES_FROM_EMAIL);
-    console.log("送信先: hirapro.sharea@gmail.com");
+    console.log("送信先:", toEmail);
     console.log("件名:", `【新規申込】${name}様 - 投資診断結果`);
     console.log("====================");
 
